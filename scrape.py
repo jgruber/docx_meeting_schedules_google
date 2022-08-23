@@ -325,7 +325,7 @@ def _build_weekend_parts_dictionary(month, year, meeting_day_of_week='Saturday',
         }
         monthly_schedules.append(schedule)
     if cache:
-        with open(f"Weekend_{month}_{year}.json", 'w') as wt_json_file:
+        with open(f"Weeklong_{month}_{year}.json", 'w') as wt_json_file:
             wt_json_file.write(json.dumps(monthly_schedules, indent=4, sort_keys=False))
     return monthly_schedules
 
