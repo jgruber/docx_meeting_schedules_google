@@ -259,17 +259,23 @@ def _get_wt_study_weeks(month, year, meeting_day_of_week='Saturday'):
                 watchtower_study['url'] = f"https://wol.jw.org{a['href']}"
                 watchtower_study['title'] = _clean_unicode_to_ascii(a.find("strong").text)
         studies.append(watchtower_study)
+    found_studies = False
     for study in studies:
-        print(f"\tgetting watchtower study details for study for the week of {study['week']}")
-        study_resp = requests.get(study['url'])
-        study_soup = BeautifulSoup(study_resp.content, 'html.parser')
-        for s in study_soup.find_all('strong'):
-            if s.text.find('SONG') > -1:
-                if study['opening_song']:
-                    study['closing_song'] = s.text
-                else:
-                    study['opening_song'] = s.text
-    return studies
+        if study['url']:
+            print(f"\tgetting watchtower study details for study for the week of {study['week']}")
+            study_resp = requests.get(study['url'])
+            study_soup = BeautifulSoup(study_resp.content, 'html.parser')
+            for s in study_soup.find_all('strong'):
+                if s.text.find('SONG') > -1:
+                    if study['opening_song']:
+                        study['closing_song'] = s.text
+                    else:
+                        study['opening_song'] = s.text
+            found_studies = True
+    if found_studies:
+        return studies
+    else:
+        return []
 
 
 def _build_weekend_parts_dictionary(month, year, meeting_day_of_week='Saturday', meeting_24hr_start_time='10:30', cache=False):
@@ -528,8 +534,11 @@ def build_midweek_schedule_doc(month, year, meeting_day_of_week='Saturday', meet
             meetings = json.load(json_file)
     else:
         meetings = _build_midweek_parts_dictionary(month, year, meeting_day_of_week, meeting_24hr_start_time, use_cache)
-    doc = template.render(meetings)
-    doc.save(f"Midweek_{month}_{year}.docx")
+    if meetings:
+        doc = template.render(meetings)
+        doc.save(f"Midweek_{month}_{year}.docx")
+    else:
+        print(f"No midweek workbook schedules are available for {month} {year}")
 
 
 def build_weeklong_schedule_doc(month, year, meeting_day_of_week='Saturday', meeting_24hr_start_time='10:30', use_cache=False):
@@ -542,5 +551,8 @@ def build_weeklong_schedule_doc(month, year, meeting_day_of_week='Saturday', mee
             meetings = json.load(json_file)
     else:
         meetings = _build_weekend_parts_dictionary(month, year, meeting_day_of_week, meeting_24hr_start_time, use_cache)
-    doc = template.render(meetings)
-    doc.save(f"Weeklong_{month}_{year}.docx")
+    if meetings:
+        doc = template.render(meetings)
+        doc.save(f"Weeklong_{month}_{year}.docx")
+    else:
+        print(f"No Watchtower study schedules are available for {month} {year}")
