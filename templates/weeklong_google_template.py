@@ -5,7 +5,7 @@ from docx import Document
 from docx.oxml.text.run import CT_R
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-docx_template_file = f"{dir_path}/s_140_google_template.docx"
+docx_template_file = f"{dir_path}/weeklong_google_template.docx"
 
 # intialize template variables
 template_variables = {
