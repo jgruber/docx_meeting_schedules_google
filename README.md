@@ -13,7 +13,7 @@ python3 -m venv .venv
 
 ## Usage
 
-## Prep Schedule with Scraped Songs, Counsel Points, and Public Talk Title
+## Scraped Songs, Counsel Points, and Public Talk Titles
 
 This repo comes with WOL scraped dictionaries for meeting songs, counsel points,
 and public talk titles. You can update them from the verions in this repository.
@@ -26,6 +26,8 @@ python3
 >>> scrape.scrape_songs()
 ```
 
+This will overwrite the included `songs.json` file.
+
 ### Apply Yourself to Reading and Teaching Counsel Points Dictionary
 
 ```
@@ -33,6 +35,22 @@ python3
 >>> import scrape
 >>> scrape.scrape_scrape_counsel_points()
 ```
+
+This will overwrite the included `studies.json` file.
+
+### Public Talk Titles Dictionary
+
+You will need to download the `S-99_E.docx` file which contains
+all the public talk titles in numeric order from `jw.org`. Place
+this file in the top repository directory and then scrape that file.
+
+```
+python3
+>>> import scrape
+>>> scrape.scrape_public_talk_titles()
+```
+
+This will overwrite the included `public_talks.json` file.
 
 ### Build Midweek Schedules for a Given Month
 
