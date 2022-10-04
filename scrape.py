@@ -409,18 +409,18 @@ def _build_midweek_parts_dictionary(month, year, meeting_day_of_week='Wednesday'
                     'duration_min': 4,
                     'start': (meeting_datetime + datetime.timedelta(minutes=26)).strftime('%-I:%M'),
                     'stop': (meeting_datetime + datetime.timedelta(minutes=30)).strftime('%-I:%M'),
-                    'reading': _clean_unicode_to_ascii(unicodedata.normalize('NFKD', soup.find(id="p10").find("a").text)),
-                    'counsel_point': _get_study_detail(unicodedata.normalize('NFKD', soup.find(id="p10").find_all("a")[-1].text.replace('th ','')))
+                    'reading': _clean_unicode_to_ascii(unicodedata.normalize('NFKD', soup.find(id="p12").find("a").text)),
+                    'counsel_point': _get_study_detail(unicodedata.normalize('NFKD', soup.find(id="p12").find_all("a")[-1].text.replace('th ','')))
                 }
             )
-            first_apply_part = 12
-            last_apply_part = 14
-            middle_song_part = 16
-            first_living_part = 17
-            last_living_part = 18
-            cbs_part = 19
-            closing_song_part = 21
-            for p in range(11,23):
+            first_apply_part = 14
+            last_apply_part = 15
+            middle_song_part = 17
+            first_living_part = 18
+            last_living_part = 19
+            cbs_part = 20
+            closing_song_part = 22
+            for p in range(13,23):
                 part_found = soup.find(id=f"p{p}")
                 if part_found:
                     part_text = unicodedata.normalize('NFKD', part_found.text)
@@ -431,9 +431,16 @@ def _build_midweek_parts_dictionary(month, year, meeting_day_of_week='Wednesday'
                         middle_song_part = p + 1
                         first_living_part = p + 2
                     if part_text and part_text.find("Concluding Comments") > -1:
-                        last_living_part = p - 2
+                        last_living_part = p - 3
                         cbs_part = p - 1
                         closing_song_part = p + 1
+            # print("first_apply_part: %d" % first_apply_part)
+            # print("last_apply_part: %d" % last_apply_part)
+            # print("middle_song_part: %d" % middle_song_part)
+            # print("first_living_part: %d" % first_living_part)
+            # print("last_living_part: %d" % last_living_part)
+            # print("cbs_part: %d" % cbs_part)
+            # print("closing_song_part: %d" % closing_song_part)
             schedule['middle_song'] = {
                 'details': _get_song_details(unicodedata.normalize('NFKD', soup.find(id=f"p{middle_song_part}").find("strong").text)),
                 'start': (meeting_datetime + datetime.timedelta(minutes=45)).strftime('%-I:%M'),
