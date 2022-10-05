@@ -161,8 +161,7 @@ def _get_weekly_schedule_links_en(month, year):
     wburl = f"{BASE_URL}/en/wol/library/r1/lp-e/all-publications/meeting-workbooks/life-and-ministry-meeting-workbook-{year}/{WORKBOOK_MONTH[month]}"
     page = requests.get(wburl)
     soup = BeautifulSoup(page.content, 'html.parser')
-    # months_regex = re.compile("(January [123456789][123456789]?-|February [123456789][123456789]?-|March [123456789][123456789]?-|April [123456789][123456789]?-|May [123456789][123456789]?-|June [123456789][123456789]?-|July [123456789][123456789]?-|August [123456789][123456789]?-|September [123456789][123456789]?-|October [123456789][123456789]?-|November [123456789][123456789]?-|December [123456789][123456789]?-)")
-    months_regex = re.compile(f"{month.capitalize()} ([123456789][123456789]?[-–,])")
+    months_regex = re.compile(f"{month.capitalize()} ([123456789][1234567890]?[-–,])")
     weekly_schedule_links: list = []
     for a in soup.find_all("a"):
         if hasattr(a, 'href'):
@@ -258,7 +257,8 @@ def _get_wt_study_weeks(month, year, meeting_day_of_week='Saturday'):
                 a = h.parent.find("a")
                 watchtower_study['url'] = f"https://wol.jw.org{a['href']}"
                 watchtower_study['title'] = _clean_unicode_to_ascii(a.find("strong").text)
-        studies.append(watchtower_study)
+        if watchtower_study['title']:
+            studies.append(watchtower_study)
     found_studies = False
     for study in studies:
         if study['url']:
@@ -430,17 +430,19 @@ def _build_midweek_parts_dictionary(month, year, meeting_day_of_week='Wednesday'
                         last_apply_part = p - 1
                         middle_song_part = p + 1
                         first_living_part = p + 2
-                    if part_text and part_text.find("Concluding Comments") > -1:
-                        last_living_part = p - 3
-                        cbs_part = p - 1
-                        closing_song_part = p + 1
-            # print("first_apply_part: %d" % first_apply_part)
-            # print("last_apply_part: %d" % last_apply_part)
-            # print("middle_song_part: %d" % middle_song_part)
-            # print("first_living_part: %d" % first_living_part)
-            # print("last_living_part: %d" % last_living_part)
-            # print("cbs_part: %d" % cbs_part)
-            # print("closing_song_part: %d" % closing_song_part)
+                    if part_text and part_text.find("Congregation Bible Study") > -1:
+                        last_living_part = p - 1
+                        cbs_part = p
+                        closing_song_part = p + 2
+            #print(url)
+            #print(meeting_datetime)
+            #print("first_apply_part: %d" % first_apply_part)
+            #print("last_apply_part: %d" % last_apply_part)
+            #print("middle_song_part: %d" % middle_song_part)
+            #print("first_living_part: %d" % first_living_part)
+            #print("last_living_part: %d" % last_living_part)
+            #print("cbs_part: %d" % cbs_part)
+            #print("closing_song_part: %d" % closing_song_part)
             schedule['middle_song'] = {
                 'details': _get_song_details(unicodedata.normalize('NFKD', soup.find(id=f"p{middle_song_part}").find("strong").text)),
                 'start': (meeting_datetime + datetime.timedelta(minutes=45)).strftime('%-I:%M'),
@@ -449,69 +451,77 @@ def _build_midweek_parts_dictionary(month, year, meeting_day_of_week='Wednesday'
             schedule['closing_song'] = {
                 'details': _get_song_details(unicodedata.normalize('NFKD', soup.find(id=f"p{closing_song_part}").find("strong").text)),
                 'start': (meeting_datetime + datetime.timedelta(minutes=98)).strftime('%-I:%M'),
-                'end': (meeting_datetime + datetime.timedelta(minutes=115)).strftime('%-I:%M')
+                'end': (meeting_datetime + datetime.timedelta(minutes=105)).strftime('%-I:%M')
             }
+            #print(soup.find(id=f"p{closing_song_part}").find("strong").text)
+            #print(schedule['closing_song'])
             part_start_datetime = None
             part_stop_datetime = None
             previous_part_has_counsel = False
             for p in range(first_apply_part, last_apply_part + 1):
-                part_type = unicodedata.normalize('NFKD', soup.find(id=f"p{p}").find("strong").text)[0:-1]
-                part_description = _clean_unicode_to_ascii(unicodedata.normalize('NFKD', soup.find(id=f"p{p}").text))
-                min_match = re.search('[123456789][0123456789]? min.', part_description)
-                part_mins = int(part_description[min_match.span()[0]:min_match.span()[1]-5])
-                cp_details = None
-                cp_found = re.search('th study', part_description)
-                if cp_found:
-                    clp = part_description.find(')', cp_found.span()[0])
-                    cp_details = _get_study_detail(unicodedata.normalize('NFKD', part_description[cp_found.span()[0]+3:clp]))
-                if p == first_apply_part:
-                    part_start_datetime = meeting_datetime + datetime.timedelta(minutes=30)
-                else:
-                    if previous_part_has_counsel:
-                        part_start_datetime = part_stop_datetime + datetime.timedelta(minutes=1)
+                el = soup.find(id=f"p{p}")
+                if el.name == 'p':
+                    part_type = unicodedata.normalize('NFKD', el.find("strong").text)[0:-1]
+                    part_description = _clean_unicode_to_ascii(unicodedata.normalize('NFKD', el.text))
+                    min_match = re.search('[123456789][0123456789]? min.', part_description)
+                    part_mins = int(part_description[min_match.span()[0]:min_match.span()[1]-5])
+                    cp_details = None
+                    cp_found = re.search('th study', part_description)
+                    if cp_found:
+                        clp = part_description.find(')', cp_found.span()[0])
+                        cp_details = _get_study_detail(unicodedata.normalize('NFKD', part_description[cp_found.span()[0]+3:clp]))
+                    if p == first_apply_part:
+                        part_start_datetime = meeting_datetime + datetime.timedelta(minutes=30)
                     else:
-                        part_start_datetime = part_stop_datetime
-                part_stop_datetime = part_start_datetime + datetime.timedelta(minutes=part_mins)
-                if cp_details:
-                    previous_part_has_counsel = True
-                else:
-                    previous_part_has_counsel = False
-                    cp_details = {}
-                schedule['apply_yourself_to_the_field_ministry']['parts'].append(
-                    {
-                        'main_hall_assigned': None,
-                        'main_hall_assistant': None,
-                        'second_school_assigned': None,
-                        'second_school_assistant': None,
-                        'type': part_type,
-                        'duration_min': part_mins,
-                        'start': part_start_datetime.strftime('%-I:%M'),
-                        'stop': part_stop_datetime.strftime('%-I:%M'),
-                        'description': part_description,
-                        'counsel_point': cp_details
-                    }
-                )
+                        if previous_part_has_counsel:
+                            part_start_datetime = part_stop_datetime + datetime.timedelta(minutes=1)
+                        else:
+                            part_start_datetime = part_stop_datetime
+                    part_stop_datetime = part_start_datetime + datetime.timedelta(minutes=part_mins)
+                    if cp_details:
+                        previous_part_has_counsel = True
+                    else:
+                        previous_part_has_counsel = False
+                        cp_details = {}
+                    schedule['apply_yourself_to_the_field_ministry']['parts'].append(
+                        {
+                            'main_hall_assigned': None,
+                            'main_hall_assistant': None,
+                            'second_school_assigned': None,
+                            'second_school_assistant': None,
+                            'type': part_type,
+                            'duration_min': part_mins,
+                            'start': part_start_datetime.strftime('%-I:%M'),
+                            'stop': part_stop_datetime.strftime('%-I:%M'),
+                            'description': part_description,
+                            'counsel_point': cp_details
+                        }
+                    )
             part_start_datetime = None
             part_stop_datetime = None
             for p in range(first_living_part, last_living_part + 1):
-                part_description = _clean_unicode_to_ascii(unicodedata.normalize('NFKD', soup.find(id=f"p{p}").text))
-                min_match = re.search('[123456789][0123456789]? min.', part_description)
-                part_mins = int(part_description[min_match.span()[0]:min_match.span()[1]-5])
-                if p == first_living_part:
-                    part_start_datetime = meeting_datetime + datetime.timedelta(minutes=50)
-                else:
-                    part_start_datetime = part_stop_datetime
-                part_stop_datetime = part_start_datetime + datetime.timedelta(minutes=part_mins)
-                schedule['living_as_christians']['parts'].append(
-                    {
-                        'type': 'part',
-                        'assigned': None,
-                        'duration_min': part_mins,
-                        'start': part_start_datetime.strftime('%-I:%M'),
-                        'stop': part_stop_datetime.strftime('%-I:%M'),
-                        'description': part_description
-                    }
-                )
+                el = soup.find(id=f"p{p}")
+                if el.name == 'p':
+                    part_description = _clean_unicode_to_ascii(unicodedata.normalize('NFKD', soup.find(id=f"p{p}").text))
+                    min_match = re.search('[123456789][0123456789]? min.', part_description)
+                    part_mins = 0
+                    if min_match:
+                        part_mins = int(part_description[min_match.span()[0]:min_match.span()[1]-5])
+                    if p == first_living_part:
+                        part_start_datetime = meeting_datetime + datetime.timedelta(minutes=50)
+                    else:
+                        part_start_datetime = part_stop_datetime
+                    part_stop_datetime = part_start_datetime + datetime.timedelta(minutes=part_mins)
+                    schedule['living_as_christians']['parts'].append(
+                        {
+                            'type': 'part',
+                            'assigned': None,
+                            'duration_min': part_mins,
+                            'start': part_start_datetime.strftime('%-I:%M'),
+                            'stop': part_stop_datetime.strftime('%-I:%M'),
+                            'description': part_description
+                        }
+                    )
             schedule['living_as_christians']['parts'].append(
                 {
                     'type': 'congregation_bible_study',

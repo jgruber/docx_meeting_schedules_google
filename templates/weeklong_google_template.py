@@ -391,16 +391,19 @@ def render(meetings=[], docx_filename=docx_template_file):
             body_element.remove(table_element)
             body_element.remove(part_element)
     # remove unused page breaks
-    if number_of_meetings < 4:
-        last_table_element = doc.tables[template_table_indexes['w3_end']]._element
-        paragraph_element = last_table_element.getnext()
-        for child in paragraph_element.getchildren():
-            if isinstance(child, CT_R):
-                paragraph_element.remove(child)
-    if number_of_meetings < 5:
-        last_table_element = doc.tables[template_table_indexes['w4_end']]._element
-        paragraph_element = last_table_element.getnext()
-        for child in paragraph_element.getchildren():
-            if isinstance(child, CT_R):
-                paragraph_element.remove(child)
+#    if number_of_meetings < 5:
+#        print(template_table_indexes['w4_end'])
+#        print(len(doc.tables))
+#        last_table_element = doc.tables[template_table_indexes['w4_end']]._element
+#        paragraph_element = last_table_element.getnext()
+#        for child in paragraph_element.getchildren():
+#            if isinstance(child, CT_R):
+#                paragraph_element.remove(child)
+#    if number_of_meetings < 4:
+#        last_table_element = doc.tables[template_table_indexes['w3_end']]._element
+#        paragraph_element = last_table_element.getnext()
+#        for child in paragraph_element.getchildren():
+#            if isinstance(child, CT_R):
+#                paragraph_element.remove(child)
+
     return doc
